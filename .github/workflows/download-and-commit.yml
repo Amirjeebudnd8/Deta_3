@@ -1,0 +1,35 @@
+name: Download and commit BTC 5-min data
+
+on:
+  workflow_dispatch:
+
+jobs:
+  download-all:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install requests pandas
+
+      - name: Run download script (single, sequential)
+        run: python download_all_and_merge.py
+
+      - name: Commit and push all CSV files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin main
+          git add data/*.csv
+          git add merged_btc_5min.csv
+          git diff --quiet && git diff --staged --quiet || git commit -m "Add BTC 5-min historical data"
+          git push
